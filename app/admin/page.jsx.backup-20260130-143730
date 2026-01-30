@@ -1,4 +1,6 @@
 ﻿"use client"
+// Add this line at the TOP with other imports
+import { sendCouponEmail, sendRejectionEmail } from '@/lib/email-gmail'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
@@ -80,84 +82,76 @@ export default function AdminPage() {
   }
 
   const updateOrderStatus = async (orderId, newStatus, couponCode = '') => {
-    try {
-      // Find the order in current state
-      const orderToUpdate = orders.find(o => o.id === orderId)
-      if (!orderToUpdate) {
-        toast.error('Order not found')
-        return
-      }
-      
-      // Update database
-      const updates = { status: newStatus }
-      if (couponCode) updates.coupon_code = couponCode
-      
-      const { error: dbError } = await supabase
-        .from('orders')
-        .update(updates)
-        .eq('id', orderId)
-      
-      if (dbError) throw dbError
-      
-      // Send email via API - USE ABSOLUTE URL
-      let emailSent = false
-      
-      if (newStatus === 'approved' && couponCode) {
-        // Call API route for sending coupon email
-        const response = await fetch(`${window.location.origin}/api/send-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'approve',
-            order: orderToUpdate,
-            couponCode: couponCode
-          }),
-        })
-        
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`)
-        }
-        
-        const data = await response.json()
-        emailSent = data.success
-      } else if (newStatus === 'rejected') {
-        // Call API route for sending rejection email
-        const response = await fetch(`${window.location.origin}/api/send-email`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'reject',
-            order: orderToUpdate
-          }),
-        })
-        
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`)
-        }
-        
-        const data = await response.json()
-        emailSent = data.success
-      }
-      
-      // Show appropriate message
-      if (emailSent) {
-        toast.success(`Order ${newStatus} and email sent!`)
-      } else {
-        toast.success(`Order marked as ${newStatus}`)
-      }
-      
-      // Refresh the orders list
-      await fetchOrders()
-      
-    } catch (error) {
-      console.error('Error updating order:', error)
-      toast.error('Failed to update order')
+  try {
+    // Find the order in current state
+    const orderToUpdate = orders.find(o => o.id === orderId)
+    if (!orderToUpdate) {
+      toast.error('Order not found')
+      return
     }
+    
+    // Update database
+    const updates = { status: newStatus }
+    if (couponCode) updates.coupon_code = couponCode
+    
+    const { error: dbError } = await supabase
+      .from('orders')
+      .update(updates)
+      .eq('id', orderId)
+    
+    if (dbError) throw dbError
+    
+    // Send email via API
+    let emailSent = false
+    
+    if (newStatus === 'approved' && couponCode) {
+      // Call API route for sending coupon email
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'approve',
+          order: orderToUpdate,
+          couponCode: couponCode
+        }),
+      })
+      
+      const data = await response.json()
+      emailSent = data.success
+    } else if (newStatus === 'rejected') {
+      // Call API route for sending rejection email
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'reject',
+          order: orderToUpdate
+        }),
+      })
+      
+      const data = await response.json()
+      emailSent = data.success
+    }
+    
+    // Show appropriate message
+    if (emailSent) {
+      toast.success(`Order ${newStatus} and email sent!`)
+    } else {
+      toast.success(`Order marked as ${newStatus}`)
+    }
+    
+    // Refresh the orders list
+    await fetchOrders()
+    
+  } catch (error) {
+    console.error('Error updating order:', error)
+    toast.error('Failed to update order')
   }
+}
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -173,7 +167,7 @@ export default function AdminPage() {
       sessionStorage.setItem('admin_auth', 'true')
       sessionStorage.setItem('admin_auth_time', Date.now().toString())
       
-      //  CRITICAL: Fetch orders after login
+      // ✅ CRITICAL: Fetch orders after login
       await fetchOrders()
       
       toast.success('Login successful!')
