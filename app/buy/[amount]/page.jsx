@@ -1,160 +1,228 @@
-
 "use client"
 
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import dynamic from "next/dynamic"
-import { toast } from "react-hot-toast"
+import { useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { Copy, Mail, User, CreditCard, ArrowLeft } from 'lucide-react'
+import QRCode from 'react-qr-code'
+import { supabase } from '@/lib/supabase'
+import toast from 'react-hot-toast'
 
-const QRCode = dynamic(() => import("qrcode"), { ssr: false })
+const UPI_ID = 'yashchhibber@ptyes'
 
 export default function BuyPage() {
   const params = useParams()
   const router = useRouter()
-  const amount = params?.amount || "500"
-  const [qrCode, setQrCode] = useState("")
+  const amount = parseInt(params.amount)
+  
+  const [formData, setFormData] = useState({
+    email: '',
+    upi_name: '',
+    utr: ''
+  })
   const [loading, setLoading] = useState(false)
-  
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const generateQR = async () => {
-        try {
-          const upiId = "yashchhibber@ptyes"
-          const qrData = `upi://pay?pa=${upiId}&pn=Yash%20Chhibber&am=${amount}&cu=INR`
-          const qr = await QRCode.toDataURL(qrData)
-          setQrCode(qr)
-        } catch (err) {
-          console.error("QR Generation Error:", err)
-        }
-      }
-      
-      generateQR()
-    }
-  }, [amount])
-  
+
+  // Generate UPI payment string
+  const upiPaymentString = `upi://pay?pa=${UPI_ID}&pn=Yash%20Chhibber&am=${amount}&cu=INR`
+
+  const handleCopyUPI = () => {
+    navigator.clipboard.writeText(UPI_ID)
+    toast.success('UPI ID copied to clipboard!')
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     
-    const formData = {
-      email: e.target.email.value,
-      upi_name: e.target.upi_name.value,
-      package: parseInt(amount),
-      amount: parseInt(amount),
-      utr: e.target.utr.value
-    }
-    
     try {
-      const response = await fetch('/api/orders/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([{
+          email: formData.email,
+          upi_name: formData.upi_name,
+          amount: amount,
+          utr: formData.utr,
+          package: amount,
+          status: 'pending'
+        }])
+        .select()
+        .single()
       
-      const result = await response.json()
+      if (error) throw error
       
-      if (result.success) {
-        toast.success(result.message)
-        // Redirect to track page with order ID
-        router.push(`/track?order=${result.orderId}`)
-      } else {
-        toast.error(result.error)
-      }
+      toast.success('Order submitted successfully! Check your email for updates.')
+      setFormData({ email: '', upi_name: '', utr: '' })
+      
+      // Redirect to track page
+      setTimeout(() => {
+        router.push(`/track`)
+      }, 2000)
+      
     } catch (error) {
-      toast.error('Network error. Please try again.')
-      console.error('Submission error:', error)
+      console.error('Order submission error:', error)
+      toast.error('Failed to submit order. Please try again.')
     } finally {
       setLoading(false)
     }
   }
-  
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-pink-50 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-pink-50 to-purple-50 py-12">
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">
+        
+        {/* Back Button */}
+        <button
+          onClick={() => router.back()}
+          className="mb-6 flex items-center text-purple-600 hover:text-purple-800"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back to Packages
+        </button>
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">
             Pay ₹{amount} to Get Your Coupon
           </h1>
+          <p className="text-gray-600">
+            Complete payment and submit details to receive your Shein coupon code
+          </p>
+        </div>
+
+        {/* QR Code Section */}
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+            Scan QR Code to Pay
+          </h2>
           
-          <div className="grid md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Scan QR Code to Pay</h3>
-              {qrCode ? (
-                <div className="bg-white p-4 rounded-xl border-2 border-gray-200">
-                  <img src={qrCode} alt="QR Code" className="w-64 h-64 mx-auto" />
-                </div>
-              ) : (
-                <div className="bg-gray-100 p-4 rounded-xl border-2 border-gray-200 w-64 h-64 mx-auto flex items-center justify-center">
-                  <p>Generating QR Code...</p>
-                </div>
-              )}
-              
-              <div className="mt-6 bg-gray-50 p-4 rounded-xl">
-                <p className="font-semibold">UPI ID:</p>
-                <p className="text-lg font-mono text-purple-600 break-all">yashchhibber@ptyes</p>
-                <p className="text-sm text-gray-600 mt-2">Send exact amount: <strong>₹{amount}</strong></p>
-                <p className="text-xs text-gray-500 mt-1">UPI Name: Yash Chhibber</p>
+          <div className="flex flex-col items-center">
+            <div className="bg-white p-6 rounded-xl border-4 border-purple-200 mb-6 shadow-lg">
+              <QRCode
+                value={upiPaymentString}
+                size={256}
+                bgColor="#FFFFFF"
+                fgColor="#000000"
+                level="H"
+              />
+            </div>
+            
+            <p className="text-gray-600 mb-4">Scan this QR with PhonePe, GPay, Paytm, or any UPI app</p>
+            
+            {/* UPI ID Box */}
+            <div className="mt-4 p-4 bg-gray-100 rounded-xl w-full max-w-md">
+              <p className="text-sm text-gray-600 mb-2 font-medium">UPI ID:</p>
+              <div className="flex items-center justify-between">
+                <code className="font-mono text-lg font-bold text-gray-800 break-all">
+                  {UPI_ID}
+                </code>
+                <button
+                  onClick={handleCopyUPI}
+                  className="ml-4 bg-purple-500 text-white p-2 rounded-lg hover:bg-purple-600 flex-shrink-0"
+                  title="Copy UPI ID"
+                >
+                  <Copy className="w-5 h-5" />
+                </button>
               </div>
             </div>
             
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Order Details</h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 mb-2">Email Address *</label>
-                  <input 
-                    type="email" 
-                    name="email"
-                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500" 
-                    placeholder="your@email.com" 
-                    required 
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-700 mb-2">UPI Name (as shown in payment) *</label>
-                  <input 
-                    type="text" 
-                    name="upi_name"
-                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500" 
-                    placeholder="Enter your UPI name" 
-                    required 
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-700 mb-2">UTR Number (12 digits) *</label>
-                  <input 
-                    type="text" 
-                    name="utr"
-                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500" 
-                    placeholder="Enter UTR from payment" 
-                    required 
-                    pattern="[A-Za-z0-9]{10,15}"
-                    title="10-15 character UTR number"
-                  />
-                  <p className="text-sm text-gray-500 mt-2">Find UTR in your bank app after payment</p>
-                </div>
-                
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold py-4 rounded-xl hover:opacity-90 transition-all disabled:opacity-50"
-                >
-                  {loading ? 'Processing...' : 'Submit Order'}
-                </button>
-              </form>
-              
-              <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                <p className="text-sm text-yellow-800">
-                  <strong>Important:</strong><br/>
-                  1. Save payment screenshot<br/>
-                  2. Coupon emailed within 24 hours<br/>
-                  3. Check spam folder if not received
-                </p>
-              </div>
+            {/* Payment Instructions */}
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl w-full max-w-md">
+              <p className="text-yellow-800 font-bold text-center mb-2">
+                ⚠️ Important Payment Instructions
+              </p>
+              <ul className="text-yellow-700 text-sm space-y-1">
+                <li>• Send <strong>exact amount: ₹{amount}</strong></li>
+                <li>• UPI Name: <strong>Yash Chhibber</strong></li>
+                <li>• Save payment screenshot after transaction</li>
+                <li>• Enter correct UTR number below</li>
+              </ul>
             </div>
           </div>
+        </div>
+
+        {/* Order Form */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Order Details</h2>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Email */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                <Mail className="inline w-5 h-5 mr-2" />
+                Email Address *
+              </label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="your@email.com"
+              />
+            </div>
+
+            {/* UPI Name */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                <User className="inline w-5 h-5 mr-2" />
+                UPI Name (as shown in payment) *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.upi_name}
+                onChange={(e) => setFormData({...formData, upi_name: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Enter exact name shown in UPI app"
+              />
+            </div>
+
+            {/* UTR Number */}
+            <div>
+              <label className="block text-gray-700 font-medium mb-2">
+                <CreditCard className="inline w-5 h-5 mr-2" />
+                UTR Number (12-16 digits) *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.utr}
+                onChange={(e) => setFormData({...formData, utr: e.target.value})}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="1234567890123456"
+                pattern="[0-9]{12,16}"
+                title="12-16 digit UTR number"
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                Find UTR in your bank/UPI app after payment
+              </p>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Submitting Order...' : 'Submit Order'}
+            </button>
+          </form>
+
+          {/* Important Notes */}
+          <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="font-bold text-blue-800 mb-2">📋 Important:</h3>
+            <ul className="text-blue-700 text-sm space-y-1">
+              <li>1. Save payment screenshot for verification</li>
+              <li>2. Coupon code emailed within 24 hours after approval</li>
+              <li>3. Check spam folder if email not received</li>
+              <li>4. Track order status anytime at /track</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-gray-500 text-sm">
+          <p>© 2024 Shein Coupon Codes. All rights reserved.</p>
+          <p className="mt-1">Need help? Contact support with your UTR number</p>
         </div>
       </div>
     </div>
