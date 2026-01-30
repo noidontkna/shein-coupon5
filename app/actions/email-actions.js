@@ -93,15 +93,15 @@ export async function sendCouponEmail(order, couponCode) {
             <div style="font-size: 32px; font-weight: bold; letter-spacing: 3px;">
               ${couponCode}
             </div>
-            <p style="margin-top: 10px;">₹${Math.floor(order.package/10)} off on orders above ₹${order.package}</p>
+            <p style="margin-top: 10px;">₹${Math.floor(order.package)} off on orders above ₹${order.package}</p>
           </div>
           
           <h3>How to use:</h3>
           <ol>
-            <li>Go to <a href="https://shein.com">shein.com</a></li>
+            <li>Go to <a href="https://www.sheinindia.in/c/sverse-5939-37961">sheinverse.com</a></li>
             <li>Add items worth ₹${order.package}+ to cart</li>
             <li>At checkout, enter: <strong>${couponCode}</strong></li>
-            <li>Enjoy ₹${Math.floor(order.package/10)} discount!</li>
+            <li>Enjoy ₹${Math.floor(order.package)} discount!</li>
           </ol>
         </div>
       `

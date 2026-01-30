@@ -5,7 +5,7 @@ export default function Home() {
     { amount: 50, discount: 500 },
     { amount: 100, discount: 1000 },
     { amount: 200, discount: 2000 },
-    { amount: 500, discount: 5000 }
+    { amount: 500, discount: 4000 }
   ]
   
   return (
