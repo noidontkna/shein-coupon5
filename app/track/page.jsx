@@ -211,8 +211,8 @@ export default function TrackPage() {
               </div>
               
               <div className="mt-2 text-sm text-gray-500">
-                <p>Try: {allOrders[0]?.id?.substring(0, 8)}... or {allOrders[0]?.utr || 'TEST123'}</p>
-              </div>
+  <p>Enter your UTR number or Order ID received via email</p>
+</div>
             </div>
           </form>
 
