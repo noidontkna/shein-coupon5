@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
@@ -324,7 +324,7 @@ export default function AdminPage() {
                         <div className="font-medium">{order.email}</div>
                         <div className="text-sm text-gray-500">{order.upi_name}</div>
                       </td>
-                      <td className="p-4 font-bold">₹{order.amount}</td>
+                      <td className="p-4 font-bold">?{order.amount}</td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                           order.status === 'approved' 
@@ -380,7 +380,7 @@ export default function AdminPage() {
                               `ID: ${order.id}\n` +
                               `Email: ${order.email}\n` +
                               `UPI: ${order.upi_name}\n` +
-                              `Amount: ₹${order.amount}\n` +
+                              `Amount: ?${order.amount}\n` +
                               `UTR: ${order.utr || 'Not provided'}\n` +
                               `Status: ${order.status}\n` +
                               `Coupon: ${order.coupon_code || 'None'}`
