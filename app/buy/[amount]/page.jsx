@@ -7,7 +7,7 @@ import QRCode from 'react-qr-code'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 
-const UPI_ID = 'yashchhibber@ptyes'
+const UPI_ID = 'aayushrawat07@ptaxis'
 
 export default function BuyPage() {
   const params = useParams()
@@ -22,7 +22,7 @@ export default function BuyPage() {
   const [loading, setLoading] = useState(false)
 
   // Generate UPI payment string
-  const upiPaymentString = `upi://pay?pa=${UPI_ID}&pn=Yash%20Chhibber&am=${amount}&cu=INR`
+  const upiPaymentString = `upi://pay?pa=${UPI_ID}&pn=Aayush%20Rawat&am=${amount}&cu=INR`
 
   const handleCopyUPI = () => {
     navigator.clipboard.writeText(UPI_ID)
@@ -131,7 +131,7 @@ export default function BuyPage() {
               </p>
               <ul className="text-yellow-700 text-sm space-y-1">
                 <li>• Send <strong>exact amount: ₹{amount}</strong></li>
-                <li>• UPI Name: <strong>Yash Chhibber</strong></li>
+                <li>• UPI Name: <strong>Aayush Rawat</strong></li>
                 <li>• Save payment screenshot after transaction</li>
                 <li>• Enter correct UTR number below</li>
               </ul>
