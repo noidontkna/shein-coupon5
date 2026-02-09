@@ -2,14 +2,32 @@
 
 export default function Home() {
   const packages = [
-    { amount: 50, discount: 500 },
-    { amount: 100, discount: 1000 },
-    { amount: 200, discount: 2000 },
-    { amount: 500, discount: 4000 }
+    { amount: 25, discount: 500 },
+    { amount: 50, discount: 1000 },
+    { amount: 100, discount: 2000 },
+    { amount: 200, discount: 4000 }
   ]
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-pink-50 to-purple-50">
+      {/* Top Red Banner */}
+      <div className="bg-gradient-to-r from-red-500 to-red-600 text-white py-3 px-4">
+        <div className="container mx-auto text-center">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+            <span className="bg-white text-red-600 font-bold px-4 py-1 rounded-full text-sm animate-pulse">
+              FLASH SALE
+            </span>
+            <span className="font-bold text-lg">50% OFF - Limited Time Offer!</span>
+            <div className="flex items-center gap-2 text-sm bg-red-700 px-3 py-1 rounded-full">
+              <svg className="w-4 h-4 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+              </svg>
+              <span>Only for a few hours!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <section className="bg-gradient-to-r from-pink-500 to-purple-600 text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-5xl font-bold mb-6">Exclusive Shein Coupon Codes</h1>
